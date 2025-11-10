@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat ARIA a Due Utenti - Minimalista Finale</title>
+    <style>
+        .chat-container {
+            width: 400px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            min-height: 250px;
+            margin-bottom: 15px;
+            list-style: none;
+        }
+        .msg-utente {
+            text-align: right;
+            color: blue;
+            margin: 5px 0;
+            padding: 2px 5px; 
+        }
+        .msg-operatore {
+            text-align: left;
+            color: green;
+            margin: 5px 0;
+            padding: 2px 5px; 
+        }
+        .chat-container li:focus {
+            outline: 3px solid orange;
+            box-shadow: 0 0 5px rgba(255, 165, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Chat Sincrona Minimalista</h1>
+
+    <div class="chat-container" id="chatList" role="log">
+        </div>
+    
+    <div class="input-group">
+        <label for="input-utente">Scrivi come Utente:</label>
+        <input type="text" id="input-utente">
+        <button id="send-utente">Invia Utente</button>
+    </div>
+    
+    <hr>
+    
+    <div class="input-group">
+        <label for="input-operatore">Scrivi come Operatore:</label>
+        <input type="text" id="input-operatore">
+        <button id="send-operatore">Invia Operatore</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputUtente = document.getElementById('input-utente');
+            const sendUtente = document.getElementById('send-utente');
+            const inputOperatore = document.getElementById('input-operatore');
+            const sendOperatore = document.getElementById('send-operatore');
+            const chatList = document.getElementById('chatList');
+
+            const addMessageToChat = (text, senderClass, prefix) => {
+                const li = document.createElement('li');
+                li.className = senderClass;
+                li.textContent = `${prefix}: ${text}`;
+                li.setAttribute('tabindex', '0');
+                chatList.appendChild(li);
+                
+                chatList.scrollTop = chatList.scrollHeight;
+            };
+
+            // Funzione di invio centrale (ora sincrona)
+            const handleSend = (inputElement, senderRole) => {
+                const text = inputElement.value.trim();
+                if (text === "") return;
+
+                const senderClass = (senderRole === 'utente') ? 'msg-utente' : 'msg-operatore';
+                const prefix = (senderRole === 'utente') ? 'Utente' : 'Operatore';
+                
+                // 1. Aggiunta immediata al DOM (triggera l'annuncio su NVDA/JAWS)
+                addMessageToChat(text, senderClass, prefix);
+                
+                // 2. Pulizia immediata
+                inputElement.value = '';
+                
+            };
+
+            // Listener Utente
+            sendUtente.addEventListener('click', () => {
+                handleSend(inputUtente, 'utente');
+            });
+            inputUtente.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); 
+                    handleSend(inputUtente, 'utente');
+                }
+            });
+
+            // Listener Operatore
+            sendOperatore.addEventListener('click', () => {
+                handleSend(inputOperatore, 'operatore');
+            });
+            inputOperatore.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); 
+                    handleSend(inputOperatore, 'operatore');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
