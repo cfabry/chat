@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - Utente</title>
+    <style>
+        body { font-family: sans-serif; }
+        .chat-container {
+            width: 400px;
+            border: 1px solid #007bff; /* Bordo blu per l'Utente */
+            padding: 10px;
+            min-height: 250px;
+            margin-bottom: 15px;
+            list-style: none;
+            overflow-y: auto;
+        }
+        .msg-utente {
+            text-align: right;
+            color: blue;
+            margin: 5px 0;
+            padding: 2px 5px;
+            background-color: #e0f7ff; /* Sfondo chiaro per i messaggi Utente */
+            border-radius: 5px;
+        }
+        .msg-operatore {
+            text-align: left;
+            color: green;
+            margin: 5px 0;
+            padding: 2px 5px;
+            background-color: #e6ffe6; /* Sfondo chiaro per i messaggi Operatore */
+            border-radius: 5px;
+        }
+        .chat-container li:focus {
+            outline: 3px solid orange;
+            box-shadow: 0 0 5px rgba(255, 165, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Chat Utente</h1>
+
+    <ul class="chat-container" id="chatList" role="log">
+    </ul>
+    
+    <div class="input-group">
+        <label for="input-utente">Scrivi un messaggio:</label>
+        <input type="text" id="input-utente" placeholder="Digita qui...">
+        <button id="send-utente">Invia</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputUtente = document.getElementById('input-utente');
+            const sendUtente = document.getElementById('send-utente');
+            const chatList = document.getElementById('chatList');
+            const CHAT_STORAGE_KEY = 'minimal_chat_log';
+
+            // Funzione per aggiungere il messaggio al DOM
+            const addMessageToChat = (text, senderRole) => {
+                const li = document.createElement('li');
+                li.className = (senderRole === 'utente') ? 'msg-utente' : 'msg-operatore';
+                const prefix = (senderRole === 'utente') ? 'Utente' : 'Operatore';
+                li.textContent = `${prefix}: ${text}`;
+                li.setAttribute('tabindex', '0');
+                chatList.appendChild(li);
+                chatList.scrollTop = chatList.scrollHeight;
+            };
+
+            // Funzione per salvare un messaggio nel localStorage
+            const saveAndSendMessage = (text, senderRole) => {
+                const newMessage = {
+                    text: text,
+                    role: senderRole,
+                    timestamp: Date.now()
+                };
+                
+                // 1. Aggiungiamo immediatamente al DOM locale (per fluidità)
+                addMessageToChat(text, senderRole);
+                
+                // 2. Aggiorniamo il log completo e lo salviamo (triggera l'evento 'storage' nell'altra finestra)
+                const currentLog = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY) || '[]');
+                currentLog.push(newMessage);
+                localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(currentLog));
+                
+                // 3. Pulizia
+                inputUtente.value = '';
+                inputUtente.focus();
+            };
+
+            // Funzione per ricaricare l'intera chat (utile all'apertura)
+            const loadChatFromStorage = () => {
+                const currentLog = JSON.parse(localStorage.getItem(CHAT_STORAGE_KEY) || '[]');
+                chatList.innerHTML = ''; // Pulisce
+                currentLog.forEach(msg => {
+                    addMessageToChat(msg.text, msg.role);
+                });
+            };
+
+            // Gestione invio (click e Enter)
+            const handleSend = () => {
+                const text = inputUtente.value.trim();
+                if (text === "") return;
+                saveAndSendMessage(text, 'utente');
+            };
+
+            sendUtente.addEventListener('click', handleSend);
+            inputUtente.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSend();
+                }
+            });
+
+            // Listener per l'evento 'storage' (ricevere messaggi dall'altra finestra)
+            window.addEventListener('storage', (event) => {
+                if (event.key === CHAT_STORAGE_KEY) {
+                    // Quando l'altra finestra scrive, ricarichiamo l'intero log
+                    loadChatFromStorage();
+                }
+            });
+
+            // Carica la chat iniziale
+            loadChatFromStorage();
+        });
+    </script>
+</body>
+</html>
